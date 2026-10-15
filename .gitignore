@@ -1,0 +1,35 @@
+# Dependencies and build output
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Local environment and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*service-account*.json
+*serviceAccount*.json
+*firebase-adminsdk*.json
+credentials.json
+application_default_credentials.json
+.aws/
+.codex/
+.agents/
+
+# Private member data and exports
+initial-data.md
+private-data/
+
+# Firebase cache and logs
+.firebase/
+*.log
+
+# Test artifacts
+playwright-report/
+test-results/
+
+# macOS files
+.DS_Store
+._*

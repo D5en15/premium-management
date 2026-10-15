@@ -1,0 +1,33 @@
+{
+  "name": "premium-management",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "test": "node --experimental-strip-types --test tests/domain.test.ts tests/seed.test.mjs tests/changes.test.ts",
+    "firebase:inspect": "node scripts/import-firebase.mjs --inspect",
+    "firebase:import": "node scripts/import-firebase.mjs --apply",
+    "firebase:verify": "node scripts/import-firebase.mjs --verify",
+    "firebase:check-rules": "node scripts/verify-firebase-security.mjs",
+    "firebase:configure-web": "node scripts/configure-web-firebase.mjs --apply",
+    "test:e2e": "npm run build && playwright test"
+  },
+  "dependencies": {
+    "firebase": "^12.19.0",
+    "lucide-react": "^0.468.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "firebase-tools": "^15.32.1",
+    "typescript": "~5.9.3",
+    "vite": "^7.2.0"
+  }
+}

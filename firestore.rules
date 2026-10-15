@@ -1,0 +1,89 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isOwner() {
+      return request.auth != null
+        && request.auth.token.email == 'nonteerapong8@gmail.com'
+        && request.auth.token.email_verified == true;
+    }
+    function validTimestamps() {
+      let data = request.resource.data;
+      return data.createdAt is timestamp
+        && data.updatedAt == request.time
+        && (resource == null ? data.createdAt == request.time : data.createdAt == resource.data.createdAt);
+    }
+    function validName(name) {
+      return name is string && name.size() > 0 && name.size() <= 120;
+    }
+    function validService() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['name', 'monthlyPrice', 'symbol', 'color', 'isActive', 'sortOrder', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['name', 'monthlyPrice', 'symbol', 'color', 'isActive', 'sortOrder', 'createdAt', 'updatedAt'])
+        && validName(data.name)
+        && data.monthlyPrice is number && data.monthlyPrice >= 0
+        && data.symbol is string && data.symbol.size() <= 8
+        && data.color is string && data.color.matches('^#[0-9a-fA-F]{6}$')
+        && data.isActive is bool
+        && data.sortOrder is int && data.sortOrder >= 0
+        && validTimestamps();
+    }
+    function validMember() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['name', 'description', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['name', 'description', 'createdAt', 'updatedAt'])
+        && validName(data.name)
+        && data.description is string && data.description.size() <= 1000
+        && validTimestamps();
+    }
+    function validSubscription() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['memberId', 'serviceId', 'description', 'expiresOn', 'billingDay', 'status', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['memberId', 'serviceId', 'description', 'expiresOn', 'billingDay', 'status', 'createdAt', 'updatedAt'])
+        && data.memberId is string && data.serviceId is string
+        && data.description is string && data.description.size() <= 1000
+        && data.expiresOn is string && data.expiresOn.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && data.billingDay is int && data.billingDay >= 1 && data.billingDay <= 31
+        && data.status in ['active', 'ended']
+        && getAfter(/databases/$(database)/documents/members/$(data.memberId)).data.name is string
+        && getAfter(/databases/$(database)/documents/services/$(data.serviceId)).data.name is string
+        && validTimestamps();
+    }
+    match /services/{id} {
+      allow read: if isOwner();
+      allow create, update: if isOwner() && validService();
+      allow delete: if false;
+    }
+    match /members/{id} {
+      allow read: if isOwner();
+      allow create, update: if isOwner() && validMember();
+      allow delete: if isOwner();
+    }
+    match /subscriptions/{id} {
+      allow read: if isOwner();
+      allow create, update: if isOwner() && validSubscription();
+      allow delete: if isOwner();
+    }
+    match /settings/messages {
+      allow read: if isOwner();
+      allow create, update: if isOwner()
+        && request.resource.data.keys().hasAll(['templates', 'createdAt', 'updatedAt'])
+        && request.resource.data.keys().hasOnly(['templates', 'createdAt', 'updatedAt'])
+        && request.resource.data.templates is map
+        && request.resource.data.templates.keys().hasAll(['five', 'one', 'today', 'late', 'renewal'])
+        && request.resource.data.templates.keys().hasOnly(['five', 'one', 'today', 'late', 'renewal'])
+        && validMessage(request.resource.data.templates.five)
+        && validMessage(request.resource.data.templates.one)
+        && validMessage(request.resource.data.templates.today)
+        && validMessage(request.resource.data.templates.late)
+        && validMessage(request.resource.data.templates.renewal)
+        && validTimestamps();
+      allow delete: if false;
+    }
+    function validMessage(text) {
+      return text is string && text.size() > 0 && text.size() <= 2000;
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
